@@ -1,0 +1,9 @@
+[package]
+name = "home_automation"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tapo = "0.8"
+dotenv = "0.15"
+tokio = { version = "1", features = ["full"] }
