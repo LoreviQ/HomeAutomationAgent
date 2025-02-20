@@ -1,6 +1,5 @@
 import { Action, IAgentRuntime, Memory, State } from '@elizaos/core';
 
-
 export const lightOffAction: Action = {
     name: 'LIGHT_OFF',
     description: 'Turns the light off',

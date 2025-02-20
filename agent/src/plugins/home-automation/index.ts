@@ -1,5 +1,5 @@
 import { Plugin } from "@elizaos/core";
-import { lightOffAction } from "./action";
+import { lightOffAction } from "./action.ts";
 
 export const homeAutomationPlugin: Plugin = {
   name: "home-automation",
