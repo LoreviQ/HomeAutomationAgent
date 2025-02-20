@@ -8,7 +8,8 @@
     "start": "tsc && node --loader ts-node/esm src/index.ts",
     "clean": "./scripts/clean.sh",
     "start:service:all": "pm2 start pnpm --name=\"all\" --restart-delay=3000 --max-restarts=10 -- run start:all",
-    "stop:service:all": "pm2 stop all"
+    "stop:service:all": "pm2 stop all",
+    "postinstall": "cd node_modules/better-sqlite3 && node-gyp rebuild"
   },
   "dependencies": {
     "@elizaos/adapter-postgres": "0.1.9",
@@ -47,6 +48,6 @@
     "ts-node": "10.9.2",
     "tsup": "8.3.5",
     "typescript": "5.6.3",
-    "pm2": "5.4.3" 
+    "pm2": "5.4.3"
   }
 }
