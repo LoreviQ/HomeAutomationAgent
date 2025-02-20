@@ -1,22 +1,24 @@
-use once_cell::sync::Lazy;
 use std::env;
 use tapo::ApiClient;
 use tokio;
 use warp::Filter;
 
-// Define global environment variables
-static USERNAME: Lazy<String> =
-    Lazy::new(|| env::var("TAPO_USERNAME").expect("TAPO_USERNAME not set"));
+async fn connect_device() -> tapo::LightHandler {
+    dotenv::dotenv().ok();
 
-static PASSWORD: Lazy<String> =
-    Lazy::new(|| env::var("TAPO_PASSWORD").expect("TAPO_PASSWORD not set"));
+    let username = env::var("TAPO_USERNAME").expect("TAPO_USERNAME not set");
+    let password = env::var("TAPO_PASSWORD").expect("TAPO_PASSWORD not set");
+    let device_ip = env::var("DEVICE_IP").expect("DEVICE_IP not set");
 
-static DEVICE_IP: Lazy<String> = Lazy::new(|| env::var("DEVICE_IP").expect("DEVICE_IP not set"));
+    let client = ApiClient::new(&username, &password);
+    client
+        .l510(&device_ip)
+        .await
+        .expect("Failed to connect to device")
+}
 
 #[tokio::main]
 async fn main() {
-    dotenv::dotenv().ok();
-
     // Define the /on endpoint
     let on_route = warp::path("on").and(warp::get()).map(move || {
         tokio::spawn(async move {
@@ -58,44 +60,28 @@ async fn main() {
 }
 
 async fn turn_on() {
-    let client = ApiClient::new(&(*USERNAME), &(*PASSWORD));
-    let device = client
-        .l510(&(*DEVICE_IP))
-        .await
-        .expect("Failed to connect to device");
+    let device = connect_device().await;
     device.on().await.expect("Failed to turn on the device");
-    println!("Device turned on\n");
+    println!("Device turned on");
 }
 
 async fn turn_off() {
-    let client = ApiClient::new(&(*USERNAME), &(*PASSWORD));
-    let device = client
-        .l510(&(*DEVICE_IP))
-        .await
-        .expect("Failed to connect to device");
+    let device = connect_device().await;
     device.off().await.expect("Failed to turn off the device");
-    println!("Device turned off\n");
+    println!("Device turned off");
 }
 
 async fn set_brightness(brightness: u8) {
-    let client = ApiClient::new(&(*USERNAME), &(*PASSWORD));
-    let device = client
-        .l510(&(*DEVICE_IP))
-        .await
-        .expect("Failed to connect to device");
+    let device = connect_device().await;
     device
         .set_brightness(brightness)
         .await
         .expect("Failed to set brightness");
-    println!("Brightness set to {}\n", brightness);
+    println!("Brightness set to {}", brightness);
 }
 
 async fn get_device_info() -> Result<impl warp::Reply, warp::Rejection> {
-    let client = ApiClient::new(&(*USERNAME), &(*PASSWORD));
-    let device = client
-        .l510(&(*DEVICE_IP))
-        .await
-        .expect("Failed to connect to device");
+    let device = connect_device().await;
     let info = device
         .get_device_info()
         .await
