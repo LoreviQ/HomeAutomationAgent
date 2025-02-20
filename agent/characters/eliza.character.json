@@ -1,6 +1,8 @@
 {
   "name": "Eliza",
-  "plugins": [],
+  "plugins": [
+    "helloWorldPlugin"
+  ],
   "clients": [],
   "modelProvider": "openrouter",
   "settings": {
