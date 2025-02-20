@@ -1,28 +1,41 @@
 use std::env;
+use std::sync::Arc;
 use tapo::{ApiClient, PlugEnergyMonitoringHandler};
 use tokio;
+use warp::Filter;
 
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
 
-    let device = get_device().await.expect("Failed to connect to device");
+    let device = Arc::new(get_device().await.expect("Failed to connect to device"));
+    let on_device = Arc::clone(&device);
+    let off_device = Arc::clone(&device);
 
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        eprintln!("Usage: {} <on|off>", args[0]);
-        return;
-    }
+    // Define the /on endpoint
+    let on_route = warp::path("on")
+        .and(warp::get())
+        .map(move || {
+            let device = Arc::clone(&on_device);
+            tokio::spawn(async move {
+                turn_on_device(&device).await;
+            });
+            warp::reply::with_status("Device turned on", warp::http::StatusCode::OK)
+        });
 
-    match args[1].as_str() {
-        "on" => {
-            turn_on_device(&device).await;
-        }
-        "off" => {
-            turn_off_device(&device).await;
-        }
-        _ => eprintln!("Invalid command. Use 'on' or 'off'."),
-    }
+    // Define the /off endpoint
+    let off_route = warp::path("off")
+        .and(warp::get())
+        .map(move || {
+            let device = Arc::clone(&off_device);
+            tokio::spawn(async move {
+                turn_off_device(&device).await;
+            });
+            warp::reply::with_status("Device turned off", warp::http::StatusCode::OK)
+        });
+
+    let routes = on_route.or(off_route);
+    warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
 
 async fn get_device() -> Result<tapo::PlugEnergyMonitoringHandler, Box<dyn std::error::Error>> {
